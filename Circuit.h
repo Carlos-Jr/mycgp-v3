@@ -14,6 +14,12 @@
 #include <omp.h>
 #include <functional>
 
+enum CircuitParameters {
+  SIZE,
+  DEPTH,
+  ENTROPY
+};
+
 class Gate {
 public:
     std::string logic_function;
@@ -23,6 +29,7 @@ public:
     std::vector<int> input_states;
     std::vector<int> output_states;
     double entropy;
+    
 
     Gate(std::string logic_function, std::vector<int> inputs, std::vector<bool> invert_inputs)
         : logic_function(logic_function), inputs(inputs), invert_inputs(invert_inputs), active(false), entropy(0) {}
@@ -65,12 +72,11 @@ public:
     std::vector<Gate*> gates;
     int n_inputs;
     int n_outputs;
-    double entropy;
-    unsigned int depth;
+    float parameters[3];
     std::map<std::string, int> nodeMapping;
     std::vector<int> output_nodes;
 
-    Circuit() : n_inputs(0), n_outputs(0), entropy(0) {}
+    Circuit() : n_inputs(0), n_outputs(0) {}
 
     void add_gate(Gate* gate) {
         gates.push_back(gate);
@@ -238,8 +244,9 @@ public:
     }
 
     void simulate() {
-        entropy = 0;
-        depth = 0;
+        this->parameters[ENTROPY] = 0;
+        this->parameters[DEPTH] = 0;
+        float entropy = 0;
         int n_combinations = std::pow(2, n_inputs);
         
         for (auto& gate : gates) {
@@ -311,7 +318,7 @@ public:
 
             entropy += (Hx - Hy);
         }
-
+        this->parameters[ENTROPY] = entropy;
         //Calculo de Depth
         std::vector<int> depth(gates.size(), 0);
         std::function<int(int)> dfs = [&](int node) {
@@ -335,7 +342,9 @@ public:
                 maxPath = std::max(maxPath, dfs(outputNode));
             }
         }
-        this->depth = maxPath;
+
+        this->parameters[DEPTH] = maxPath;
+        this->parameters[SIZE] = this->gates.size();
     }
 };
 
