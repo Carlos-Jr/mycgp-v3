@@ -1,6 +1,4 @@
-# README
-
-## Cartesian Genetic Programming for Combinational Digital Circuits Optimization
+# Cartesian Genetic Programming for Combinational Digital Circuits Optimization
 
 ### Overview
 
