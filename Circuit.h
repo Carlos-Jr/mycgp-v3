@@ -34,6 +34,9 @@ public:
     Gate(std::string logic_function, std::vector<int> inputs, std::vector<bool> invert_inputs)
         : logic_function(logic_function), inputs(inputs), invert_inputs(invert_inputs), active(false), entropy(0) {}
 
+    Gate(const Gate& other)
+        : logic_function(other.logic_function), inputs(other.inputs), invert_inputs(other.invert_inputs), active(other.active), input_states(other.input_states), output_states(other.output_states), entropy(other.entropy) {}
+        
     std::string to_string() {
         std::stringstream ss;
         ss << "{\n";
@@ -78,9 +81,49 @@ public:
 
     Circuit() : n_inputs(0), n_outputs(0) {}
 
-    void add_gate(Gate* gate) {
-        gates.push_back(gate);
+    Circuit(const Circuit& other)
+        : n_inputs(other.n_inputs), n_outputs(other.n_outputs) {
+        std::copy(std::begin(other.parameters), std::end(other.parameters), std::begin(parameters));
+        nodeMapping = other.nodeMapping;
+        output_nodes = other.output_nodes;
+
+        gates.resize(other.gates.size(), nullptr);
+        for (size_t i = 0; i < other.gates.size(); ++i) {
+            if (other.gates[i] != nullptr) {
+                gates[i] = new Gate(*other.gates[i]);
+            }
+        }
     }
+
+    Circuit& operator=(const Circuit& other) {
+        if (this == &other) return *this;
+
+        n_inputs = other.n_inputs;
+        n_outputs = other.n_outputs;
+        std::copy(std::begin(other.parameters), std::end(other.parameters), std::begin(parameters));
+        nodeMapping = other.nodeMapping;
+        output_nodes = other.output_nodes;
+
+        for (auto& gate : gates) {
+            delete gate;
+        }
+        gates.clear();
+        gates.resize(other.gates.size(), nullptr);
+        for (size_t i = 0; i < other.gates.size(); ++i) {
+            if (other.gates[i] != nullptr) {
+                gates[i] = new Gate(*other.gates[i]);
+            }
+        }
+
+        return *this;
+    }
+
+~Circuit() {
+    for (auto& gate : gates) {
+        delete gate;
+    }
+}
+    
     
     void loadFromVerilog(const std::string& filepath) {
         std::cout << "Loading Verilog..." << std::endl;
@@ -243,13 +286,15 @@ public:
         std::cout << filepath << " loaded!\n" << std::endl;
     }
 
-    void simulate() {
+    void update() {
         this->parameters[ENTROPY] = 0;
         this->parameters[DEPTH] = 0;
         float entropy = 0;
         int n_combinations = std::pow(2, n_inputs);
         
         for (auto& gate : gates) {
+            gate->input_states.clear();
+            gate->output_states.clear();
             gate->input_states.resize(n_combinations, 0);
             gate->output_states.resize(n_combinations, 0);
         }
