@@ -41,5 +41,5 @@ g++ -fopenmp -O3 -o main ./main.cpp
 
 After compilation, you can run the program with:
 ```
-./main <VerilogFileName>
+./main <VerilogFileName> [<generations> <parameter>]
 ```
