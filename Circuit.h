@@ -118,12 +118,11 @@ public:
         return *this;
     }
 
-~Circuit() {
-    for (auto& gate : gates) {
-        delete gate;
+    ~Circuit() {
+        for (auto& gate : gates) {
+            delete gate;
+        }
     }
-}
-    
     
     void loadFromVerilog(const std::string& filepath) {
         std::cout << "Loading Verilog..." << std::endl;
@@ -297,41 +296,76 @@ public:
             gate->output_states.clear();
             gate->input_states.resize(n_combinations, 0);
             gate->output_states.resize(n_combinations, 0);
+            gate->active = false;
         }
+
+        //Calculo de Depth
+        unsigned int activeSize = 0;
+        std::vector<int> depth(gates.size(), 0);
+        std::function<int(int)> dfs = [&](int node) {
+            if (depth[node] > 0) return depth[node];
+            if (gates[node] == nullptr) return 0; // No gate connected
+            
+            gates[node]->active = true;
+            ++activeSize;
+
+            int maxDepth = 0;
+            for (int input : gates[node]->inputs) {
+                if (input < 0) { // Input node
+                    maxDepth = std::max(maxDepth, 1);
+                } else {
+                    maxDepth = std::max(maxDepth, dfs(input) + 1);
+                }
+            }
+            depth[node] = maxDepth;
+            return maxDepth;
+        };
+
+        int maxPath = 0;
+        for (int outputNode : output_nodes) {
+            if (outputNode >= 0) { // Skip if it's an input signal
+                maxPath = std::max(maxPath, dfs(outputNode));
+            }
+        }
+
+        this->parameters[DEPTH] = maxPath;
+        this->parameters[SIZE] = activeSize;
 
         // Simulação do circuito e calculo dos estados
         #pragma omp parallel for
         for (int combination_input = 0; combination_input < n_combinations; ++combination_input) {
             for (auto& gate : gates) {
-                std::vector<bool> gateInputStates(gate->inputs.size(), false);
+                if(gate->active){
+                    std::vector<bool> gateInputStates(gate->inputs.size(), false);
 
-                for (size_t i = 0; i < gate->inputs.size(); ++i) {
-                    bool value = false;
-                    if (gate->inputs[i] < 0) {
-                        value = (combination_input >> (-gate->inputs[i] - 1)) & 1;
+                    for (size_t i = 0; i < gate->inputs.size(); ++i) {
+                        bool value = false;
+                        if (gate->inputs[i] < 0) {
+                            value = (combination_input >> (-gate->inputs[i] - 1)) & 1;
+                        } else {
+                            value = gates[gate->inputs[i]]->output_states[combination_input] > 0;
+                        }
+
+                        if (gate->invert_inputs[i]) {
+                            value = !value;
+                        }
+
+                        gateInputStates[gate->inputs.size() - i - 1] = value;
+                    }
+
+                    int inputStateNumber = 0;
+                    for (bool state : gateInputStates) {
+                        inputStateNumber = (inputStateNumber << 1) | (state ? 1 : 0);
+                    }
+                    gate->input_states[combination_input] = inputStateNumber;
+
+                    if (gate->logic_function == "&") {
+                        gate->output_states[combination_input] = std::all_of(gateInputStates.begin(), gateInputStates.end(), [](bool b) { return b; }) ? 1 : 0;
+                    } else if (gate->logic_function == "|") {
+                        gate->output_states[combination_input] = std::any_of(gateInputStates.begin(), gateInputStates.end(), [](bool b) { return b; }) ? 1 : 0;
                     } else {
-                        value = gates[gate->inputs[i]]->output_states[combination_input] > 0;
+                        throw std::runtime_error("Logic gate is not AND or OR");
                     }
-
-                    if (gate->invert_inputs[i]) {
-                        value = !value;
-                    }
-
-                    gateInputStates[gate->inputs.size() - i - 1] = value;
-                }
-
-                int inputStateNumber = 0;
-                for (bool state : gateInputStates) {
-                    inputStateNumber = (inputStateNumber << 1) | (state ? 1 : 0);
-                }
-                gate->input_states[combination_input] = inputStateNumber;
-
-                if (gate->logic_function == "&") {
-                    gate->output_states[combination_input] = std::all_of(gateInputStates.begin(), gateInputStates.end(), [](bool b) { return b; }) ? 1 : 0;
-                } else if (gate->logic_function == "|") {
-                    gate->output_states[combination_input] = std::any_of(gateInputStates.begin(), gateInputStates.end(), [](bool b) { return b; }) ? 1 : 0;
-                } else {
-                    throw std::runtime_error("Logic gate is not AND or OR");
                 }
             }
         }
@@ -364,32 +398,8 @@ public:
             entropy += (Hx - Hy);
         }
         this->parameters[ENTROPY] = entropy;
-        //Calculo de Depth
-        std::vector<int> depth(gates.size(), 0);
-        std::function<int(int)> dfs = [&](int node) {
-            if (depth[node] > 0) return depth[node];
-            if (gates[node] == nullptr) return 0; // No gate connected
-            int maxDepth = 0;
-            for (int input : gates[node]->inputs) {
-                if (input < 0) { // Input node
-                    maxDepth = std::max(maxDepth, 1);
-                } else {
-                    maxDepth = std::max(maxDepth, dfs(input) + 1);
-                }
-            }
-            depth[node] = maxDepth;
-            return maxDepth;
-        };
-
-        int maxPath = 0;
-        for (int outputNode : output_nodes) {
-            if (outputNode >= 0) { // Skip if it's an input signal
-                maxPath = std::max(maxPath, dfs(outputNode));
-            }
-        }
-
-        this->parameters[DEPTH] = maxPath;
-        this->parameters[SIZE] = this->gates.size();
+        
+        
     }
 };
 
