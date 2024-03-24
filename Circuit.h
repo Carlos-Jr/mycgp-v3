@@ -262,7 +262,7 @@ public:
     void update() {
         this->parameters[ENTROPY] = 0;
         this->parameters[DEPTH] = 0;
-        float entropy = 0;
+        double entropy = 0;
         int n_combinations = std::pow(2, n_inputs);
         
         for (auto& gate : gates) {
@@ -360,15 +360,15 @@ public:
             for (int value : gate->input_states) {
                 uniqueInputs[value]++;
             }
+            std::map<int, int> uniqueOutputs;
+            for (int value : gate->output_states) {
+                uniqueOutputs[value]++;
+            }
+
             double Hx = 0;
             for (auto& p : uniqueInputs) {
                 double pValue = static_cast<double>(p.second) / static_cast<double>(n_combinations);
                 Hx -= pValue * std::log2(pValue);
-            }
-
-            std::map<int, int> uniqueOutputs;
-            for (int value : gate->output_states) {
-                uniqueOutputs[value]++;
             }
             double Hy = 0;
             for (auto& p : uniqueOutputs) {
@@ -376,7 +376,7 @@ public:
                 Hy -= pValue * std::log2(pValue);
             }
 
-            entropy += (Hx - Hy);
+            entropy += (Hx-Hy);
         }
         this->parameters[ENTROPY] = entropy;
         
