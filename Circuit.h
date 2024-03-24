@@ -76,7 +76,7 @@ public:
     std::vector<Gate*> gates;
     int n_inputs;
     int n_outputs;
-    float parameters[3];
+    double parameters[3];
     std::map<std::string, int> nodeMapping;
     std::vector<int> output_nodes;
 
@@ -387,10 +387,9 @@ public:
             for (int value : gate->input_states) {
                 uniqueInputs[value]++;
             }
-            double sumUniqueInputs = std::accumulate(uniqueInputs.begin(), uniqueInputs.end(), 0, [](int sum, const std::pair<int, int>& p) { return sum + p.second; });
             double Hx = 0;
             for (auto& p : uniqueInputs) {
-                double pValue = static_cast<double>(p.second) / sumUniqueInputs;
+                double pValue = static_cast<double>(p.second) / static_cast<double>(n_combinations);
                 Hx -= pValue * std::log2(pValue);
             }
 
@@ -398,10 +397,9 @@ public:
             for (int value : gate->output_states) {
                 uniqueOutputs[value]++;
             }
-            double sumUniqueOutputs = std::accumulate(uniqueOutputs.begin(), uniqueOutputs.end(), 0, [](int sum, const std::pair<int, int>& p) { return sum + p.second; });
             double Hy = 0;
             for (auto& p : uniqueOutputs) {
-                double pValue = static_cast<double>(p.second) / sumUniqueOutputs;
+                double pValue = static_cast<double>(p.second) / static_cast<double>(n_combinations);
                 Hy -= pValue * std::log2(pValue);
             }
 
