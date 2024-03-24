@@ -41,6 +41,7 @@ public:
         std::stringstream ss;
         ss << "{\n";
         ss << "  \"Function\": \"" << logic_function << "\",\n";
+        ss << "  \"Is Active\": \"" << (active?"Yes":"No") << "\",\n";
         ss << "  \"Inputs\": [";
         for (size_t i = 0; i < inputs.size(); ++i) {
             ss << inputs[i];
@@ -253,7 +254,7 @@ public:
                 std::getline(ss, equationParts[0], '=');
                 std::getline(ss, equationParts[1], '=');
 
-                std::string logic_function = "?";
+                std::string logic_function = "-";
                 if (equationParts[1].find("&") != std::string::npos) {
                     logic_function = "&";
                 }else if (equationParts[1].find("|") != std::string::npos) {
@@ -294,8 +295,8 @@ public:
         for (auto& gate : gates) {
             gate->input_states.clear();
             gate->output_states.clear();
-            gate->input_states.resize(n_combinations, 0);
-            gate->output_states.resize(n_combinations, 0);
+            gate->input_states.resize(n_combinations, 9);
+            gate->output_states.resize(n_combinations, 9);
             gate->active = false;
         }
 
@@ -307,7 +308,8 @@ public:
             if (gates[node] == nullptr) return 0; // No gate connected
             
             gates[node]->active = true;
-            ++activeSize;
+            if(gates[node]->logic_function != "-")
+                ++activeSize;
 
             int maxDepth = 0;
             for (int input : gates[node]->inputs) {
@@ -323,8 +325,10 @@ public:
 
         int maxPath = 0;
         for (int outputNode : output_nodes) {
-            if (outputNode >= 0) { // Skip if it's an input signal
+            if (gates[outputNode]->logic_function !="-") { // Skip if it's an wire gate
                 maxPath = std::max(maxPath, dfs(outputNode));
+            }else{ //Mark Wire as active
+                gates[outputNode]->active = true;
             }
         }
 
@@ -336,35 +340,41 @@ public:
         for (int combination_input = 0; combination_input < n_combinations; ++combination_input) {
             for (auto& gate : gates) {
                 if(gate->active){
-                    std::vector<bool> gateInputStates(gate->inputs.size(), false);
+                    if (gate->logic_function == "-") {
+                        bool value = (combination_input >> (-gate->inputs[0] - 1)) & 1;
+                        gate->input_states[combination_input] = value;
+                        gate->output_states[combination_input] = value;
+                    }else{
+                        std::vector<bool> gateInputStates(gate->inputs.size(), false);
 
-                    for (size_t i = 0; i < gate->inputs.size(); ++i) {
-                        bool value = false;
-                        if (gate->inputs[i] < 0) {
-                            value = (combination_input >> (-gate->inputs[i] - 1)) & 1;
-                        } else {
-                            value = gates[gate->inputs[i]]->output_states[combination_input] > 0;
+                        for (size_t i = 0; i < gate->inputs.size(); ++i) {
+                            bool value = false;
+                            if (gate->inputs[i] < 0) {
+                                value = (combination_input >> (-gate->inputs[i] - 1)) & 1;
+                            } else {
+                                value = gates[gate->inputs[i]]->output_states[combination_input] > 0;
+                            }
+
+                            if (gate->invert_inputs[i]) {
+                                value = !value;
+                            }
+
+                            gateInputStates[gate->inputs.size() - i - 1] = value;
                         }
 
-                        if (gate->invert_inputs[i]) {
-                            value = !value;
+                        int inputStateNumber = 0;
+                        for (bool state : gateInputStates) {
+                            inputStateNumber = (inputStateNumber << 1) | (state ? 1 : 0);
                         }
+                        gate->input_states[combination_input] = inputStateNumber;
 
-                        gateInputStates[gate->inputs.size() - i - 1] = value;
-                    }
-
-                    int inputStateNumber = 0;
-                    for (bool state : gateInputStates) {
-                        inputStateNumber = (inputStateNumber << 1) | (state ? 1 : 0);
-                    }
-                    gate->input_states[combination_input] = inputStateNumber;
-
-                    if (gate->logic_function == "&") {
-                        gate->output_states[combination_input] = std::all_of(gateInputStates.begin(), gateInputStates.end(), [](bool b) { return b; }) ? 1 : 0;
-                    } else if (gate->logic_function == "|") {
-                        gate->output_states[combination_input] = std::any_of(gateInputStates.begin(), gateInputStates.end(), [](bool b) { return b; }) ? 1 : 0;
-                    } else {
-                        throw std::runtime_error("Logic gate is not AND or OR");
+                        if (gate->logic_function == "&") {
+                            gate->output_states[combination_input] = std::all_of(gateInputStates.begin(), gateInputStates.end(), [](bool b) { return b; }) ? 1 : 0;
+                        } else if (gate->logic_function == "|") {
+                            gate->output_states[combination_input] = std::any_of(gateInputStates.begin(), gateInputStates.end(), [](bool b) { return b; }) ? 1 : 0;
+                        }else {
+                            throw std::runtime_error("Logic gate is not AND or OR");
+                        }
                     }
                 }
             }
