@@ -126,7 +126,6 @@ public:
     }
     
     void loadFromVerilog(const std::string& filepath) {
-        std::cout << "Loading Verilog..." << std::endl;
         std::ifstream file(filepath);
         std::string line;
         std::vector<std::string> lines;
@@ -199,22 +198,6 @@ public:
 
         n_inputs = inputs.size();
         n_outputs = outputs.size();
-
-        std::cout << "    Nodes list:";
-        for (const auto& node : nodesList) {
-            std::cout << node << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "    Inputs list:";
-        for (const auto& n : inputs) {
-            std::cout << n << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "    Outputs list:";
-        for (const auto& n : outputs) {
-            std::cout << n << " ";
-        }
-        std::cout << std::endl;
         
         nodesList.insert(nodesList.end(), outputs.begin(), outputs.end());
 
@@ -229,17 +212,9 @@ public:
             nodeMapping[inputs[i]] = -i-1;
         }
 
-        std::cout << "    Node Mapping:\n";
-        for (const auto& pair : nodeMapping) {
-            std::cout <<"        "<<pair.first << " -> " << pair.second << std::endl;
-        }
-
-        std::cout << "    Output gates:";
         for (const auto& n : outputs) {
             output_nodes.push_back(nodeMapping[n]);
-            std::cout << nodeMapping[n] << " ";
         }
-        std::cout << std::endl;
 
         for (const auto& line : lines) {
             if (line.find("assign") != std::string::npos) {
@@ -282,8 +257,6 @@ public:
                 gates[gateNumber] = thisGate;
             }
         }
-
-        std::cout << filepath << " loaded!\n" << std::endl;
     }
 
     void update() {

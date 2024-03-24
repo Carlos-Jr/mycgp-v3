@@ -78,11 +78,15 @@ public:
     }
 
     void run() {
+        std::cout <<"generation,entropy,size,depth,change" << std::endl;
         for(unsigned int i = 0; i < generations; ++i) {
-            std::cout <<"Geração:"<< i+1 <<" Entropia:"<<best.parameters[ENTROPY] <<" Tamanho:"<<best.parameters[SIZE] <<" Depth:"<<best.parameters[DEPTH] << std::endl;
+            std::cout << i <<","<< best.parameters[ENTROPY] <<","<<best.parameters[SIZE] <<","<<best.parameters[DEPTH];
             pointMutation();
             if(isChildBetter()) {
                 best = child;
+                std::cout<<",1" << std::endl;
+            }else{
+                std::cout<<",0" << std::endl;
             }
         }
     }
