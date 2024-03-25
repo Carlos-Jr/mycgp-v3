@@ -41,7 +41,7 @@ public:
         std::stringstream ss;
         ss << "{\n";
         ss << "  \"Function\": \"" << logic_function << "\",\n";
-        ss << "  \"Is Active\": \"" << (active?"Yes":"No") << "\",\n";
+        ss << "  \"Is_Active\": \"" << (active?"Yes":"No") << "\",\n";
         ss << "  \"Inputs\": [";
         for (size_t i = 0; i < inputs.size(); ++i) {
             ss << inputs[i];
@@ -54,13 +54,13 @@ public:
             if (i < invert_inputs.size() - 1) ss << ", ";
         }
         ss << "],\n";
-        ss << "  \"input states\": [";
+        ss << "  \"input_states\": [";
         for (size_t i = 0; i < input_states.size(); ++i) {
             ss << input_states[i];
             if (i < input_states.size() - 1) ss << ", ";
         }
         ss << "],\n";
-        ss << "  \"output states\": [";
+        ss << "  \"output_states\": [";
         for (size_t i = 0; i < output_states.size(); ++i) {
             ss << output_states[i];
             if (i < output_states.size() - 1) ss << ", ";
@@ -259,6 +259,30 @@ public:
         }
     }
 
+    void saveCircuitStatesJSON(const std::string& filepath){
+        std::ofstream logFile(filepath);
+        logFile << "[\n";
+        for (size_t g = 0; g < gates.size(); ++g) {
+            logFile << "  {\n";
+            logFile << "    \"gate\": \"" << gates[g]->logic_function << "\",\n";
+            logFile << "    \"input_states\": [";
+            for (size_t i = 0; i < gates[g]->input_states.size(); ++i) {
+                logFile << gates[g]->input_states[i];
+                if (i < gates[g]->input_states.size() - 1) logFile << ", ";
+            }
+            logFile << "],\n";
+            logFile << "    \"output_states\": [";
+            for (size_t i = 0; i < gates[g]->output_states.size(); ++i) {
+                logFile << gates[g]->output_states[i];
+                if (i < gates[g]->output_states.size() - 1) logFile << ", ";
+            }
+            logFile << "]\n";
+            if (g < gates.size() - 1) logFile << "  },\n";
+            else logFile << "  }\n";
+        }
+        logFile << "]\n";
+        logFile.close();
+    }
     void update() {
         this->parameters[ENTROPY] = 0;
         this->parameters[DEPTH] = 0;
