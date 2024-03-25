@@ -25,7 +25,7 @@ public:
     };
 
     SimpleCGP(unsigned int generations, Circuit &best, CircuitParameters optimizeVar) :
-    generations(generations), best(best), optimizeVar(optimizeVar) {srand(time(0));}
+    generations(generations), best(best), optimizeVar(optimizeVar) {}
 
     void pointMutation() {
         child = this->best;
@@ -78,6 +78,7 @@ public:
     }
 
     void run() {
+        srand(time(0));
         std::cout <<"generation,entropy,size,depth,change" << std::endl;
         for(unsigned int i = 0; i < generations; ++i) {
             std::cout << i <<","<< best.parameters[ENTROPY] <<","<<best.parameters[SIZE] <<","<<best.parameters[DEPTH];

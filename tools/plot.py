@@ -49,4 +49,6 @@ grouped_df[list(other_props.keys())[1]].plot(kind='line', color=other_props[list
 ax3.set_ylabel(list(other_props.keys())[1].capitalize(), color=other_props[list(other_props.keys())[1]])
 ax2.set_xlabel('Generations')
 plt.subplots_adjust(hspace=0.1)
-plt.savefig(filenames+"-"+prop+"graphs.png")
+plt.savefig(filenames+"-"+prop+"-graphs.png")
+
+grouped_df.loc[[0, 69999]].to_csv(f"{filenames}-{prop}-mean.csv")
