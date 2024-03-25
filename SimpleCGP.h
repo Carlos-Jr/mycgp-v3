@@ -43,7 +43,16 @@ public:
                 std::mt19937 mt(rd());
                 std::uniform_int_distribution<int> dist(0, 1);
                 child.gates[gateToMutate]->logic_function = dist(mt) == 0 ? '&' : '|';
-
+                //Se o tamanho for menor que 2, gerar uma outra input aleatória
+                if(child.gates[gateToMutate]->inputs.size()<2){
+                    int newInput = rand() % (gateToMutate + child.n_inputs) - child.n_inputs;
+                    child.gates[gateToMutate]->inputs.push_back(newInput);
+                    std::random_device rd;
+                    std::mt19937 mt(rd());
+                    std::uniform_int_distribution<int> dist(0, 1);
+                    int randomBit = dist(mt);
+                    child.gates[gateToMutate]->invert_inputs.push_back(randomBit);
+                }
             }else if(mutationType==MUTATE_INPUT_0 || mutationType==MUTATE_INPUT_1){
                 int newInput = rand() % (gateToMutate + child.n_inputs) - child.n_inputs;
                 //Se mutationType==3 (MUTATE_INPUT_1) => mutar input 1 (3-2)
