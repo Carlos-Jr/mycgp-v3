@@ -284,8 +284,6 @@ public:
                 Gate* thisGate = new Gate(logic_function, gateInputs, invertGateInputs);
                 std::string outputNode = equationParts[0];
                 outputNode.erase(std::remove_if(outputNode.begin(), outputNode.end(), [](unsigned char c) { return !std::isalnum(c); }), outputNode.end());
-                std::cout << "Inserindo gate " << nodeCount << std::endl;
-                std::cout << "Nó " << outputNode << std::endl;
                 
                 gates[nodeCount] = thisGate;
                 nodeMapping[outputNode] = nodeCount;
