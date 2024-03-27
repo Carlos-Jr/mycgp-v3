@@ -1,5 +1,6 @@
 #include "Circuit.h"
 #include "SimpleCGP.h"
+#include "SPEAmod.h"
 #include <fstream>
 
 int main(int argc, char* argv[]) {
@@ -28,20 +29,20 @@ int main(int argc, char* argv[]) {
         std::transform(parameter.begin(), parameter.end(), parameter.begin(), ::toupper);
 
         if(parameter == "ENTROPY"){
-            SimpleCGP ga(runGenerations,circuit,ENTROPY);
-            ga.run();
+            SPEAmod ga(runGenerations,circuit,ENTROPY);
+            ga.run(4);
         }else if(parameter == "SIZE"){
-            SimpleCGP ga(runGenerations,circuit,SIZE);
-            ga.run();
+            SPEAmod ga(runGenerations,circuit,SIZE);
+            ga.run(4);
         }else if(parameter == "DEPTH"){
-            SimpleCGP ga(runGenerations,circuit,DEPTH);
-            ga.run();
+            SPEAmod ga(runGenerations,circuit,DEPTH);
+            ga.run(4);
         }else{
             std::cerr << "Parameter does not exist\n";
         }
     }else{
-        SimpleCGP ga(runGenerations,circuit,ENTROPY);
-        ga.run();
+        SPEAmod ga(runGenerations,circuit,ENTROPY);
+        ga.run(4);
     }
 
     return 0;
