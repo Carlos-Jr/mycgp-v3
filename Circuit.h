@@ -13,6 +13,7 @@
 #include <numeric>
 #include <omp.h>
 #include <functional>
+#include <random>
 
 enum CircuitParameters {
   SIZE,
@@ -22,7 +23,7 @@ enum CircuitParameters {
 
 class Gate {
 public:
-    std::string logic_function;
+    char logic_function;
     std::vector<int> inputs;
     std::vector<bool> invert_inputs;
     bool active;
@@ -31,7 +32,7 @@ public:
     double entropy;
     
 
-    Gate(std::string logic_function, std::vector<int> inputs, std::vector<bool> invert_inputs)
+    Gate(char logic_function, std::vector<int> inputs, std::vector<bool> invert_inputs)
         : logic_function(logic_function), inputs(inputs), invert_inputs(invert_inputs), active(false), entropy(0) {}
 
     Gate(const Gate& other)
@@ -125,6 +126,41 @@ public:
         }
     }
     
+    void randomizeGate(int node){
+        std::random_device rd;
+        std::mt19937 mt(rd());
+        std::uniform_int_distribution<int> dist(0, 1);
+        char logic_functions[2] = {'&', '|'};
+        char newlogic_function = logic_functions[dist(mt)]; 
+
+        int newInput0 = rand() % (node + n_inputs) - n_inputs;
+        bool invert_input0 = static_cast<bool>(dist(mt));
+
+        int newInput1 = rand() % (node + n_inputs) - n_inputs;
+        bool invert_input1 = static_cast<bool>(dist(mt));
+
+        gates[node]->active = false;
+
+        gates[node]->logic_function = newlogic_function;
+
+        gates[node]->inputs.clear();
+        gates[node]->invert_inputs.clear();
+
+        gates[node]->inputs.push_back(newInput0);
+        gates[node]->inputs.push_back(newInput1);
+        gates[node]->invert_inputs.push_back(invert_input0);
+        gates[node]->invert_inputs.push_back(invert_input1);
+    }
+
+    void expandCircuit(float value){
+        unsigned int newGates = static_cast<int>(gates.size() * value) - gates.size();
+        std::cout << "Acrescentar " << newGates << " portas no circuito\n";
+        for(int i=0;i<newGates;++i){
+            gates.push_back(new Gate('&', std::vector<int>(), std::vector<bool>()));
+            randomizeGate(gates.size()-1);
+        }
+    }
+
     void loadFromVerilog(const std::string& filepath) {
         std::ifstream file(filepath);
         std::string line;
@@ -202,7 +238,7 @@ public:
         nodesList.insert(nodesList.end(), outputs.begin(), outputs.end());
 
         gates.resize(nodesList.size(), nullptr);
-
+        
         for (size_t i = 0; i < nodesList.size(); ++i) {
             nodeMapping[nodesList[i]] = i;
         }
@@ -229,18 +265,18 @@ public:
                 std::getline(ss, equationParts[0], '=');
                 std::getline(ss, equationParts[1], '=');
 
-                std::string logic_function = "-";
-                if (equationParts[1].find("&") != std::string::npos) {
-                    logic_function = "&";
-                }else if (equationParts[1].find("|") != std::string::npos) {
-                    logic_function = "|";
+                char logic_function = '-';
+                if (equationParts[1].find('&') != std::string::npos) {
+                    logic_function = '&';
+                }else if (equationParts[1].find('|') != std::string::npos) {
+                    logic_function = '|';
                 }
 
                 std::vector<int> gateInputs;
                 std::vector<bool> invertGateInputs;
                 std::stringstream ssInputs(equationParts[1]);
                 std::string token;
-                while (std::getline(ssInputs, token, logic_function[0])) {
+                while (std::getline(ssInputs, token, logic_function)) {
                     bool invert = false;
                     if (token.find("~") != std::string::npos) {
                         invert = true;
@@ -259,7 +295,7 @@ public:
         }
     }
 
-    void saveCircuitStatesJSON(const std::string& filepath){
+    void saveStatesJSON(const std::string& filepath){
         std::ofstream logFile(filepath);
         logFile << "[\n";
         for (size_t g = 0; g < gates.size(); ++g) {
@@ -283,6 +319,116 @@ public:
         logFile << "]\n";
         logFile.close();
     }
+
+    void saveVerilog(const std::string& filepath){
+        std::ofstream file(filepath);
+
+        file<<"module LogicModule ( \n   ";
+
+        for (int i = 0; i < n_inputs; ++i) {
+            if (i > 0) file << ",";
+            file << " pi" << i;
+        }
+        file << ",\n   ";
+
+        for (int i = 0; i < n_outputs; ++i) {
+            if (i > 0) file << ",";
+            file << " po" << i;
+        }
+        
+        file << " );\n";
+        
+        file << "  input ";
+        for (int i = 0; i < n_inputs; ++i) {
+            if (i > 0) file << ",";
+            file << " pi" << i;
+        }
+        file << ";\n";
+
+        file << "  output";
+        for (int i = 0; i < n_outputs; ++i) {
+            if (i > 0) file << ",";
+            file << " po" << i;
+        }
+        file << ";\n";
+
+        file << "  wire ";
+        for(size_t i = 0; i < gates.size(); ++i) {
+            auto it = std::find(output_nodes.begin(), output_nodes.end(), i);
+            if(it == output_nodes.end()) {
+                if(gates[i]->active){
+                    if (i > 0) file << ",";
+                    file << "n" << i;
+                }
+            } 
+        }
+        file << ";\n";
+
+
+        for (size_t i = 0; i < gates.size(); i++) {
+            if(gates[i]->active){
+                file << "  assign ";
+
+                auto it = std::find(output_nodes.begin(), output_nodes.end(), i);
+
+                if (it != output_nodes.end()) {
+                    file << "po" << std::distance(output_nodes.begin(), it);
+                } else {
+                    file << "n" << i;
+                }
+                file << " = ";
+
+                file << (gates[i]->invert_inputs[0] ? "~" : "");
+
+                if (gates[i]->inputs[0] >= 0) {
+                    file << "n" << gates[i]->inputs[0];
+                } else {
+                    file << "pi" << (-gates[i]->inputs[0]-1);
+                }
+
+                if(gates[i]->inputs.size()>1){
+                    file << " "<< gates[i]->logic_function<<" ";
+                    file << (gates[i]->invert_inputs[1] ? "~" : "");
+
+                    if (gates[i]->inputs[1] >= 0) {
+                        file << "n" << gates[i]->inputs[1];
+                    } else {
+                        file << "pi" << (-gates[i]->inputs[1]-1);
+                    }
+                }
+
+                file << ";\n";
+                }
+        }
+        file<<"\nendmodule";
+        file.close();
+    }
+    void saveGatesJSON(const std::string& filepath){
+        std::ofstream outFile(filepath);
+        outFile << "[\n";
+        for (size_t i = 0; i < gates.size(); ++i) {
+            if(gates[i]->active){
+                outFile << "  {\n";
+                outFile << "    \"logic_function\": \"" << gates[i]->logic_function << "\",\n";
+                outFile << "    \"inputs\": [";
+                for (size_t j = 0; j < gates[i]->inputs.size(); ++j) {
+                outFile << gates[i]->inputs[j];
+                if (j < gates[i]->inputs.size() - 1) outFile << ", ";
+                }
+                outFile << "],\n";
+                outFile << "    \"invert_inputs\": [";
+                for (size_t j = 0; j < gates[i]->invert_inputs.size(); ++j) {
+                outFile << (gates[i]->invert_inputs[j] ? "true" : "false");
+                if (j < gates[i]->invert_inputs.size() - 1) outFile << ", ";
+                }
+                outFile << "]\n";
+                if (i < gates.size() - 1) outFile << "  },\n";
+                else outFile << "  }\n";
+            }
+        }
+        outFile << "]";
+        outFile.close();
+    }
     void update() {
         this->parameters[ENTROPY] = 0;
         this->parameters[DEPTH] = 0;
@@ -305,7 +451,7 @@ public:
             if (gates[node] == nullptr) return 0; // No gate connected
             
             gates[node]->active = true;
-            if(gates[node]->logic_function != "-")
+            if(gates[node]->logic_function != '-')
                 ++activeSize;
 
             int maxDepth = 0;
@@ -321,8 +467,9 @@ public:
         };
 
         int maxPath = 0;
+
         for (int outputNode : output_nodes) {
-            if (gates[outputNode]->logic_function !="-") { // Skip if it's an wire gate
+            if (gates[outputNode]->logic_function !='-') { // Skip if it's an wire gate
                 maxPath = std::max(maxPath, dfs(outputNode));
             }else{ //Mark Wire as active
                 gates[outputNode]->active = true;
@@ -337,7 +484,7 @@ public:
         for (int combination_input = 0; combination_input < n_combinations; ++combination_input) {
             for (auto& gate : gates) {
                 if(gate->active){
-                    if (gate->logic_function == "-") {
+                    if (gate->logic_function == '-') {
                         bool value = (combination_input >> (-gate->inputs[0] - 1)) & 1;
                         gate->input_states[combination_input] = value;
                         gate->output_states[combination_input] = value;
@@ -365,9 +512,9 @@ public:
                         }
                         gate->input_states[combination_input] = inputStateNumber;
 
-                        if (gate->logic_function == "&") {
+                        if (gate->logic_function == '&') {
                             gate->output_states[combination_input] = std::all_of(gateInputStates.begin(), gateInputStates.end(), [](bool b) { return b; }) ? 1 : 0;
-                        } else if (gate->logic_function == "|") {
+                        } else if (gate->logic_function == '|') {
                             gate->output_states[combination_input] = std::any_of(gateInputStates.begin(), gateInputStates.end(), [](bool b) { return b; }) ? 1 : 0;
                         }else {
                             throw std::runtime_error("Logic gate is not AND or OR");

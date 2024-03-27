@@ -64,10 +64,11 @@ public:
                 std::uniform_int_distribution<int> dist(0, 1);
                 int randomBit = dist(mt);
                 //Se mutationType==5 (MUTATE_INVERT_INPUT_1) => mutar inverter input 1 (4-2)
-                child.gates[gateToMutate]->invert_inputs[mutationType-4] = randomBit;
+                if(mutationType==MUTATE_INVERT_INPUT_1 && child.gates[gateToMutate]->inputs.size()>1)
+                    child.gates[gateToMutate]->invert_inputs[mutationType-4] = randomBit;
             }
+            child.update();
         }
-        child.update();
     }
 
     bool isChildBetter(){
@@ -91,7 +92,9 @@ public:
         std::cout <<"generation,entropy,size,depth,change" << std::endl;
         for(unsigned int i = 0; i < generations; ++i) {
             std::cout << i <<","<< best.parameters[ENTROPY] <<","<<best.parameters[SIZE] <<","<<best.parameters[DEPTH];
+            
             pointMutation();
+
             if(isChildBetter()) {
                 best = child;
                 std::cout<<",1" << std::endl;
@@ -99,6 +102,8 @@ public:
                 std::cout<<",0" << std::endl;
             }
         }
+        best.saveGatesJSON("best.json");
+        best.saveVerilog("best.v");
     }
     
 };
