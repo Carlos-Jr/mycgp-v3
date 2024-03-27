@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for i in {1..30}; do
+for i in {1..2}; do
     for file in ./benchmarks/*; do
         for parameter in entropy size depth; do
             bench=$(basename "${file%.*}")

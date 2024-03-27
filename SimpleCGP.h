@@ -90,7 +90,6 @@ public:
         
 
     void run() {
-        srand(time(0));
         std::cout <<"generation,entropy,size,depth,change" << std::endl;
         for(unsigned int i = 0; i < generations; ++i) {
             std::cout << i <<","<< best.parameters[ENTROPY] <<","<<best.parameters[SIZE] <<","<<best.parameters[DEPTH];

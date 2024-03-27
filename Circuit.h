@@ -239,19 +239,14 @@ public:
 
         gates.resize(nodesList.size(), nullptr);
         
-        for (size_t i = 0; i < nodesList.size(); ++i) {
-            nodeMapping[nodesList[i]] = i;
-        }
-
         for (size_t i = 0; i < inputs.size(); i++)
         {
             nodeMapping[inputs[i]] = -i-1;
         }
 
-        for (const auto& n : outputs) {
-            output_nodes.push_back(nodeMapping[n]);
-        }
+        output_nodes.resize(n_outputs,0);
 
+        int nodeCount = 0;
         for (const auto& line : lines) {
             if (line.find("assign") != std::string::npos) {
                 std::string cleanedLine = line;
@@ -289,8 +284,19 @@ public:
                 Gate* thisGate = new Gate(logic_function, gateInputs, invertGateInputs);
                 std::string outputNode = equationParts[0];
                 outputNode.erase(std::remove_if(outputNode.begin(), outputNode.end(), [](unsigned char c) { return !std::isalnum(c); }), outputNode.end());
-                int gateNumber = nodeMapping[outputNode];
-                gates[gateNumber] = thisGate;
+                std::cout << "Inserindo gate " << nodeCount << std::endl;
+                std::cout << "Nó " << outputNode << std::endl;
+                
+                gates[nodeCount] = thisGate;
+                nodeMapping[outputNode] = nodeCount;
+
+                if (outputNode.find("po") != std::string::npos) {
+                    int outputNodeNumber = std::stoi(outputNode.substr(2));
+                    output_nodes[outputNodeNumber]= nodeCount;
+                }
+
+                ++nodeCount;
+                
             }
         }
     }
@@ -409,6 +415,7 @@ public:
         for (size_t i = 0; i < gates.size(); ++i) {
             if(gates[i]->active){
                 outFile << "  {\n";
+                outFile << "    \"id\": \"" << i << "\",\n";
                 outFile << "    \"logic_function\": \"" << gates[i]->logic_function << "\",\n";
                 outFile << "    \"inputs\": [";
                 for (size_t j = 0; j < gates[i]->inputs.size(); ++j) {
@@ -443,12 +450,19 @@ public:
             gate->active = false;
         }
 
-        //Calculo de Depth
         unsigned int activeSize = 0;
         std::vector<int> depth(gates.size(), 0);
         std::function<int(int)> dfs = [&](int node) {
+            // Check for out-of-bounds access
+            if (node < 0 || node >= gates.size()) {
+                std::cout << "Out-of-bounds access: node = " << node << std::endl;
+                return 0;
+            }
+            if (gates[node] == nullptr) {
+                std::cout << "Null gate at node: " << node << std::endl;
+                return 0; // No gate connected
+            }
             if (depth[node] > 0) return depth[node];
-            if (gates[node] == nullptr) return 0; // No gate connected
             
             gates[node]->active = true;
             if(gates[node]->logic_function != '-')
@@ -479,7 +493,6 @@ public:
         this->parameters[DEPTH] = maxPath;
         this->parameters[SIZE] = activeSize;
 
-        // Simulação do circuito e calculo dos estados
         #pragma omp parallel for
         for (int combination_input = 0; combination_input < n_combinations; ++combination_input) {
             for (auto& gate : gates) {
@@ -523,35 +536,35 @@ public:
                 }
             }
         }
-        
-        //Calculo da Entropia total do circuito
         #pragma omp parallel for reduction(+:entropy)
         for (auto& gate : gates) {
-            std::map<int, int> uniqueInputs;
-            for (int value : gate->input_states) {
-                uniqueInputs[value]++;
-            }
-            std::map<int, int> uniqueOutputs;
-            for (int value : gate->output_states) {
-                uniqueOutputs[value]++;
-            }
+            if(gate->active){
+                std::map<int, int> uniqueInputs;
+                for (int value : gate->input_states) {
+                    uniqueInputs[value]++;
+                }
+                std::map<int, int> uniqueOutputs;
+                for (int value : gate->output_states) {
+                    uniqueOutputs[value]++;
+                }
 
-            double Hx = 0;
-            for (auto& p : uniqueInputs) {
-                double pValue = static_cast<double>(p.second) / static_cast<double>(n_combinations);
-                Hx -= pValue * std::log2(pValue);
-            }
-            double Hy = 0;
-            for (auto& p : uniqueOutputs) {
-                double pValue = static_cast<double>(p.second) / static_cast<double>(n_combinations);
-                Hy -= pValue * std::log2(pValue);
-            }
+                double Hx = 0;
+                for (auto& p : uniqueInputs) {
+                    double pValue = static_cast<double>(p.second) / static_cast<double>(n_combinations);
+                    Hx -= pValue * std::log2(pValue);
+                }
+                double Hy = 0;
+                for (auto& p : uniqueOutputs) {
+                    double pValue = static_cast<double>(p.second) / static_cast<double>(n_combinations);
+                    Hy -= pValue * std::log2(pValue);
+                }
 
-            entropy += (Hx-Hy);
+                entropy += (Hx-Hy);
+            }
         }
         this->parameters[ENTROPY] = entropy;
         
-        
+        this->saveGatesJSON("debug.json");
     }
 };
 
