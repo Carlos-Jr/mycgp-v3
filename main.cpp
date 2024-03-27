@@ -29,20 +29,20 @@ int main(int argc, char* argv[]) {
         std::transform(parameter.begin(), parameter.end(), parameter.begin(), ::toupper);
 
         if(parameter == "ENTROPY"){
-            SPEAmod ga(runGenerations,circuit,ENTROPY);
-            ga.run(4);
+            SimpleCGP ga(runGenerations,circuit,ENTROPY);
+            ga.run();
         }else if(parameter == "SIZE"){
-            SPEAmod ga(runGenerations,circuit,SIZE);
-            ga.run(4);
+            SimpleCGP ga(runGenerations,circuit,SIZE);
+            ga.run();
         }else if(parameter == "DEPTH"){
-            SPEAmod ga(runGenerations,circuit,DEPTH);
-            ga.run(4);
+            SimpleCGP ga(runGenerations,circuit,DEPTH);
+            ga.run();
         }else{
             std::cerr << "Parameter does not exist\n";
         }
     }else{
-        SPEAmod ga(runGenerations,circuit,ENTROPY);
-        ga.run(4);
+        SimpleCGP ga(runGenerations,circuit,ENTROPY);
+        ga.run();
     }
 
     return 0;
