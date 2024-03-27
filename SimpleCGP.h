@@ -12,7 +12,6 @@ class SimpleCGP {
 public:
     unsigned int generations;
     Circuit best;
-    Circuit child;
     CircuitParameters optimizeVar;
 
     enum MutationType {
@@ -27,8 +26,8 @@ public:
     SimpleCGP(unsigned int generations, Circuit &best, CircuitParameters optimizeVar) :
     generations(generations), best(best), optimizeVar(optimizeVar) {}
 
-    void pointMutation() {
-        child = this->best;
+    Circuit pointMutation() {
+        Circuit child = this->best;
         MutationType mutationType = static_cast<MutationType>(rand() % 6);
                     
         if(mutationType==MUTATE_OUTPUT){
@@ -69,23 +68,24 @@ public:
             }
             child.update();
         }
+        return child;
     }
 
-    bool isChildBetter(){
-        //Primeiro, compara se têm a mesma tabela verdade, se não, é pior
-        for(size_t out = 0; out < child.output_nodes.size(); ++out) {
-            for (size_t i = 0; i < child.gates[child.output_nodes[out]]->output_states.size(); ++i) {
-                if (child.gates[child.output_nodes[out]]->output_states[i] != best.gates[best.output_nodes[out]]->output_states[i]) {
+    bool isChildBetter(Circuit *oneChild){        //Primeiro, compara se têm a mesma tabela verdade, se não, é pior
+        for(size_t out = 0; out < oneChild->output_nodes.size(); ++out) {
+            for (size_t i = 0; i < oneChild->gates[oneChild->output_nodes[out]]->output_states.size(); ++i) {
+                if (oneChild->gates[oneChild->output_nodes[out]]->output_states[i] != best.gates[best.output_nodes[out]]->output_states[i]) {
                     return false;
                 }
             }
         }
         // É melhor ou igual na variável a ser melhorada?
-        if(child.parameters[optimizeVar]<= best.parameters[optimizeVar])
+        if(oneChild->parameters[optimizeVar]<= best.parameters[optimizeVar])
             return true;
         else
             return false;
     }
+        
 
     void run() {
         srand(time(0));
@@ -93,9 +93,9 @@ public:
         for(unsigned int i = 0; i < generations; ++i) {
             std::cout << i <<","<< best.parameters[ENTROPY] <<","<<best.parameters[SIZE] <<","<<best.parameters[DEPTH];
             
-            pointMutation();
+            Circuit child = pointMutation();
 
-            if(isChildBetter()) {
+            if(isChildBetter(&child)) {
                 best = child;
                 std::cout<<",1" << std::endl;
             }else{
