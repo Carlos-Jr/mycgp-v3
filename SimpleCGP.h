@@ -26,42 +26,44 @@ public:
     SimpleCGP(unsigned int generations, Circuit &best, CircuitParameters optimizeVar) :
     generations(generations), best(best), optimizeVar(optimizeVar) {}
 
-    Circuit pointMutation() {
-        Circuit child = this->best;
-        MutationType mutationType = static_cast<MutationType>(rand() % 6);
-                    
+    Circuit pointMutation(Circuit* parent) {
+        Circuit child = *parent;
+        std::random_device rd;
+        std::mt19937 mt(rd());
+        std::uniform_int_distribution<int> distMutationType(0, 5);
+        MutationType mutationType = static_cast<MutationType>(distMutationType(mt));
+
         if(mutationType==MUTATE_OUTPUT){
-            unsigned int selectedOutput = rand() % child.output_nodes.size();
-            unsigned int newOutput = rand() % child.gates.size();
+            std::uniform_int_distribution<unsigned int> distOutput(0, child.output_nodes.size() - 1);
+            unsigned int selectedOutput = distOutput(mt);
+            std::uniform_int_distribution<unsigned int> distNewOutput(0, child.gates.size() - 1);
+            unsigned int newOutput = distNewOutput(mt);
             child.output_nodes[selectedOutput] = newOutput;
 
         }else{
-            unsigned int gateToMutate = rand() % child.gates.size();
+            std::uniform_int_distribution<unsigned int> distGateToMutate(0, child.gates.size() - 1);
+            unsigned int gateToMutate = distGateToMutate(mt);
             if(mutationType==MUTATE_FUNCTION){
-                std::random_device rd;
-                std::mt19937 mt(rd());
-                std::uniform_int_distribution<int> dist(0, 1);
-                child.gates[gateToMutate]->logic_function = dist(mt) == 0 ? '&' : '|';
+                std::uniform_int_distribution<int> distFunction(0, 1);
+                child.gates[gateToMutate]->logic_function = distFunction(mt) == 0 ? '&' : '|';
                 //Se o tamanho for menor que 2, gerar uma outra input aleatória
                 if(child.gates[gateToMutate]->inputs.size()<2){
-                    int newInput = rand() % (gateToMutate + child.n_inputs) - child.n_inputs;
+                    std::uniform_int_distribution<int> distNewInput(-static_cast<int>(child.n_inputs), gateToMutate - 1);
+                    int newInput = distNewInput(mt);
                     child.gates[gateToMutate]->inputs.push_back(newInput);
-                    std::random_device rd;
-                    std::mt19937 mt(rd());
-                    std::uniform_int_distribution<int> dist(0, 1);
-                    int randomBit = dist(mt);
+                    std::uniform_int_distribution<int> distBit(0, 1);
+                    int randomBit = distBit(mt);
                     child.gates[gateToMutate]->invert_inputs.push_back(randomBit);
                 }
             }else if(mutationType==MUTATE_INPUT_0 || mutationType==MUTATE_INPUT_1){
-                int newInput = rand() % (gateToMutate + child.n_inputs) - child.n_inputs;
+                std::uniform_int_distribution<int> distNewInput(-static_cast<int>(child.n_inputs), gateToMutate - 1);
+                int newInput = distNewInput(mt);
                 //Se mutationType==3 (MUTATE_INPUT_1) => mutar input 1 (3-2)
                 child.gates[gateToMutate]->inputs[mutationType-2] = newInput;
 
             }else if(mutationType==MUTATE_INVERT_INPUT_0 || mutationType==MUTATE_INVERT_INPUT_1){
-                std::random_device rd;
-                std::mt19937 mt(rd());
-                std::uniform_int_distribution<int> dist(0, 1);
-                int randomBit = dist(mt);
+                std::uniform_int_distribution<int> distBit(0, 1);
+                int randomBit = distBit(mt);
                 //Se mutationType==5 (MUTATE_INVERT_INPUT_1) => mutar inverter input 1 (4-2)
                 if(mutationType==MUTATE_INVERT_INPUT_1 && child.gates[gateToMutate]->inputs.size()>1)
                     child.gates[gateToMutate]->invert_inputs[mutationType-4] = randomBit;
@@ -93,7 +95,7 @@ public:
         for(unsigned int i = 0; i < generations; ++i) {
             std::cout << i <<","<< best.parameters[ENTROPY] <<","<<best.parameters[SIZE] <<","<<best.parameters[DEPTH];
             
-            Circuit child = pointMutation();
+            Circuit child = pointMutation(&best);
 
             if(isChildBetter(&child)) {
                 best = child;
@@ -105,6 +107,5 @@ public:
         best.saveGatesJSON("best.json");
         best.saveVerilog("best.v");
     }
-    
 };
-#endif // GENETIC_ALGORITHM_H
+#endif
