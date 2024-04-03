@@ -1,0 +1,47 @@
+#!/bin/bash
+
+benchmarks=(
+    "03-adder"
+    "04-adder"
+    "05-adder"
+    "06-adder"
+    "08-adder"
+    "alu1_split"
+    "b01_C"
+    "b01_opt_C"
+    "b02_C"
+    "b02_opt_C"
+    "b06_opt_C"
+    "cm138a"
+    "cm151a"
+    "cm152a"
+    "cm163a"
+    "cm42a"
+    "cm82a"
+    "con1"
+    "dc1"
+    "dc2"
+    "decod"
+    "dk27"
+    "m1"
+    "newapla1"
+    "newcond"
+    "rd53"
+    "s208"
+    "s27_split"
+    "sqrt8"
+    "sqrt8ml"
+    "squar5"
+    "t3"
+    "tcon"
+    "wim"
+    "x2"
+    "xor5"
+)
+
+for benchmark in "${benchmarks[@]}"; do
+    echo "Executando benchmark: $benchmark"
+    python ./tools/plot.py ./results "$benchmark"
+done
+
+echo "Todos os benchmarks foram executados."
