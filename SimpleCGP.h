@@ -89,22 +89,22 @@ public:
     }
         
 
-    void run() {
-        std::cout <<"generation,entropy,size,depth,change" << std::endl;
-        for(unsigned int i = 0; i < generations; ++i) {
-            std::cout << i <<","<< best.parameters[ENTROPY] <<","<<best.parameters[SIZE] <<","<<best.parameters[DEPTH];
-            
-            Circuit child = pointMutation(&best);
+        void run(std::string name) {
+            std::cout <<"generation,entropy,size,depth,change" << std::endl;
+            for(unsigned int i = 0; i < generations; ++i) {
+                std::cout << i <<","<< best.parameters[ENTROPY] <<","<<best.parameters[SIZE] <<","<<best.parameters[DEPTH];
 
-            if(isChildBetter(&child)) {
-                best = child;
-                std::cout<<",1" << std::endl;
-            }else{
-                std::cout<<",0" << std::endl;
+                Circuit child = pointMutation(&best);
+
+                if(isChildBetter(&child)) {
+                    best = child;
+                    std::cout<<",1" << std::endl;
+                }else{
+                    std::cout<<",0" << std::endl;
+                }
             }
+            // auto timestamp = std::to_string(std::time(nullptr));
+            // best.saveVerilog(name + timestamp + ".v");
         }
-        best.saveGatesJSON("best.json");
-        best.saveVerilog("best.v");
-    }
 };
 #endif

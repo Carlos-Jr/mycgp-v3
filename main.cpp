@@ -30,19 +30,19 @@ int main(int argc, char* argv[]) {
 
         if(parameter == "ENTROPY"){
             SimpleCGP ga(runGenerations,circuit,ENTROPY);
-            ga.run();
+            ga.run("best");
         }else if(parameter == "SIZE"){
             SimpleCGP ga(runGenerations,circuit,SIZE);
-            ga.run();
+            ga.run("best");
         }else if(parameter == "DEPTH"){
             SimpleCGP ga(runGenerations,circuit,DEPTH);
-            ga.run();
+            ga.run("best");
         }else{
             std::cerr << "Parameter does not exist\n";
         }
     }else{
         SimpleCGP ga(runGenerations,circuit,ENTROPY);
-        ga.run();
+        ga.run("best");
     }
 
     return 0;
