@@ -152,13 +152,13 @@ public:
         gates[node]->invert_inputs.push_back(invert_input1);
     }
 
-    void expandCircuit(float value){
-        unsigned int newGates = static_cast<int>(gates.size() * value) - gates.size();
-        std::cout << "Acrescentar " << newGates << " portas no circuito\n";
+    void generateGates(int newGates){
+        std::cout << "Gerar " << newGates << " portas no circuito\n";
         for(int i=0;i<newGates;++i){
             gates.push_back(new Gate('&', std::vector<int>(), std::vector<bool>()));
             randomizeGate(gates.size()-1);
         }
+        std::cout<<"Novo size: "<<gates.size()<<"\n";
     }
 
     void loadFromVerilog(const std::string& filepath) {
@@ -236,8 +236,9 @@ public:
         n_outputs = outputs.size();
         
         nodesList.insert(nodesList.end(), outputs.begin(), outputs.end());
-
-        gates.resize(nodesList.size(), nullptr);
+        
+        // gates.resize(nodesList.size(), nullptr);
+        generateGates(static_cast<int>(nodesList.size()*2));
         
         for (size_t i = 0; i < inputs.size(); i++)
         {
@@ -246,7 +247,7 @@ public:
 
         output_nodes.resize(n_outputs,0);
 
-        int nodeCount = 0;
+        int nodePosition = 0;
         for (const auto& line : lines) {
             if (line.find("assign") != std::string::npos) {
                 std::string cleanedLine = line;
@@ -283,20 +284,30 @@ public:
 
                 Gate* thisGate = new Gate(logic_function, gateInputs, invertGateInputs);
                 std::string outputNode = equationParts[0];
+                thisGate->active = true;
                 outputNode.erase(std::remove_if(outputNode.begin(), outputNode.end(), [](unsigned char c) { return !std::isalnum(c); }), outputNode.end());
                 
-                gates[nodeCount] = thisGate;
-                nodeMapping[outputNode] = nodeCount;
-
+                gates[nodePosition] = thisGate;
+                nodeMapping[outputNode] = nodePosition;
+                
                 if (outputNode.find("po") != std::string::npos) {
+
                     int outputNodeNumber = std::stoi(outputNode.substr(2));
-                    output_nodes[outputNodeNumber]= nodeCount;
+                    output_nodes[outputNodeNumber]= nodePosition;
                 }
 
-                ++nodeCount;
+                std::cout <<"["<<nodePosition<<"]"<< thisGate->to_string()<<"\n";
+                nodePosition +=2;
                 
             }
         }
+
+        std::cout << "Outputs nodes: ";
+        for(const auto& node : output_nodes) {
+            std::cout << node << " ";
+        }
+        std::cout << std::endl;
+        
     }
 
     void saveStatesJSON(const std::string& filepath){
