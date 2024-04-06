@@ -108,6 +108,17 @@ public:
 
             std::stringstream ss;
             ss << std::put_time(std::localtime(&in_time_t), "%Y%m%d_%H%M");
+            switch(optimizeVar) {
+                case SIZE:
+                    ss << "_SIZE";
+                    break;
+                case DEPTH:
+                    ss << "_DEPTH";
+                    break;
+                case ENTROPY:
+                    ss << "_ENTROPY";
+                    break;
+            }
             best.saveVerilog(name+"_" + ss.str() + ".v");
         }
 };
