@@ -16,9 +16,9 @@
 #include <random>
 
 enum CircuitParameters {
-  SIZE,
-  DEPTH,
-  ENTROPY
+    SIZE,
+    DEPTH,
+    ENTROPY
 };
 
 class Gate {

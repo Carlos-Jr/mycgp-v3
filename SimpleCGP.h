@@ -103,8 +103,12 @@ public:
                     std::cout<<",0" << std::endl;
                 }
             }
-            // auto timestamp = std::to_string(std::time(nullptr));
-            // best.saveVerilog(name + timestamp + ".v");
+            auto now = std::chrono::system_clock::now();
+            auto in_time_t = std::chrono::system_clock::to_time_t(now);
+
+            std::stringstream ss;
+            ss << std::put_time(std::localtime(&in_time_t), "%Y%m%d_%H%M");
+            best.saveVerilog(name+"_" + ss.str() + ".v");
         }
 };
 #endif
