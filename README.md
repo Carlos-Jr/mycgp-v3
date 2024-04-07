@@ -16,7 +16,7 @@ CGP is a form of genetic programming that evolves programs or digital circuits r
 
 #### Optimization Targets
 
-- **Energy Efficiency**: Following Landauer's principle, which posits that there is a minimum possible amount of energy required to change one bit of information.
+- **Entropy**: Following Landauer's principle, which posits that there is a minimum possible amount of energy required to change one bit of information.
 - **Size**: The size of a circuit is measured by the number of gates it contains. A smaller circuit uses fewer resources and can be more cost-effective.
 - **Depth**: The depth of a circuit refers to the longest path from any input to any output. Reducing depth can lead to faster operation times since signals have shorter paths to traverse.
 
