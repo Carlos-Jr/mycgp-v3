@@ -43,3 +43,40 @@ After compilation, you can run the program with:
 ```
 ./main <VerilogFileName> [<generations> <parameter>]
 ```
+
+### Tools
+
+In the `tools` directory, we have provided several utility scripts designed to facilitate the analysis and visualization of the evolutionary process of digital circuits optimized by the Cartesian Genetic Programming (CGP) approach. Below is a brief description of each tool, including how to use them:
+
+#### Python Scripts
+
+- **plot.py**: This Python script is designed to plot the evolution of the circuit over time, using data from the evolution log. It provides a visual representation of how the circuit's characteristics (such as size, depth, and energy efficiency) have evolved across generations. To use this script, you need to provide the directory where the evolution log is stored and the name of the benchmark you wish to plot.
+
+  **Usage**:
+  ```
+  python plot.py <path_to_logs_directory> <benchmark_name>
+  ```
+
+- **makeSummary.py**: This script scans through all the results in "results" directory and compiles a summary table. This table shows the initial and final state of each optimization parameter (size, depth, and entropy) for each benchmark. It's an efficient way to get a high-level overview of the performance and improvements across all benchmarks.
+
+  **Usage**:
+  ```
+  python makeSummary.py
+  ```
+
+#### Shell Scripts
+
+- **runAll.sh**: A bash script that automates the process of running the evolutionary algorithm for all benchmarks across all optimization parameters (size, depth, and entropy).
+
+  **Usage**:
+  Simply execute the script without any arguments:
+  ```
+  ./runAll.sh
+  ```
+
+- **plotAll.sh**: Similar to `runAll.sh`, this bash script automates the plotting process for all circuits corresponding to all benchmarks. It utilizes the `plot.py` script internally to generate visualizations for each benchmark, making it easier to assess the evolutionary progress across different cases.
+
+  **Usage**:
+  ```
+  ./plotAll.sh
+  ```
