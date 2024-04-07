@@ -50,7 +50,7 @@ In the `tools` directory, we have provided several utility scripts designed to f
 
 #### Python Scripts
 
-- **plot.py**: This Python script is designed to plot the evolution of the circuit over time, using data from the evolution log. It provides a visual representation of how the circuit's characteristics (such as size, depth, and energy efficiency) have evolved across generations. To use this script, you need to provide the directory where the evolution log is stored and the name of the benchmark you wish to plot.
+- **plot.py**: This Python script is designed to plot the evolution of the circuit over time, using data from the evolution log. It provides a visual representation of how the circuit's parameter have evolved across generations. To use this script, you need to provide the directory where the evolution log is stored and the name of the benchmark you wish to plot.
 
   **Usage**:
   ```
