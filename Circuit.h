@@ -296,18 +296,10 @@ public:
                     output_nodes[outputNodeNumber]= nodePosition;
                 }
 
-                std::cout <<"["<<nodePosition<<"]"<< thisGate->to_string()<<"\n";
                 nodePosition +=2;
                 
             }
         }
-
-        std::cout << "Outputs nodes: ";
-        for(const auto& node : output_nodes) {
-            std::cout << node << " ";
-        }
-        std::cout << std::endl;
-        
     }
 
     void saveStatesJSON(const std::string& filepath){
@@ -495,7 +487,11 @@ public:
             if (gates[outputNode]->logic_function !='-') { // Skip if it's an wire gate
                 maxPath = std::max(maxPath, dfs(outputNode));
             }else{ //Mark Wire as active
-                gates[outputNode]->active = true;
+                if(gates[outputNode]->inputs[0]>=0)
+                    maxPath = std::max(maxPath, dfs(outputNode));
+                else
+                    gates[outputNode]->active = true;
+                
             }
         }
 
