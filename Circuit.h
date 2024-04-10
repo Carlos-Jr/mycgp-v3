@@ -153,12 +153,10 @@ public:
     }
 
     void generateGates(int newGates){
-        std::cout << "Gerar " << newGates << " portas no circuito\n";
         for(int i=0;i<newGates;++i){
             gates.push_back(new Gate('&', std::vector<int>(), std::vector<bool>()));
             randomizeGate(gates.size()-1);
         }
-        std::cout<<"Novo size: "<<gates.size()<<"\n";
     }
 
     void loadFromVerilog(const std::string& filepath) {
@@ -468,7 +466,7 @@ public:
             gates[node]->active = true;
             if(gates[node]->logic_function != '-')
                 ++activeSize;
-
+            
             int maxDepth = 0;
             for (int input : gates[node]->inputs) {
                 if (input < 0) { // Input node
@@ -484,15 +482,7 @@ public:
         int maxPath = 0;
 
         for (int outputNode : output_nodes) {
-            if (gates[outputNode]->logic_function !='-') { // Skip if it's an wire gate
-                maxPath = std::max(maxPath, dfs(outputNode));
-            }else{ //Mark Wire as active
-                if(gates[outputNode]->inputs[0]>=0)
-                    maxPath = std::max(maxPath, dfs(outputNode));
-                else
-                    gates[outputNode]->active = true;
-                
-            }
+            maxPath = std::max(maxPath, dfs(outputNode));
         }
 
         this->parameters[DEPTH] = maxPath;

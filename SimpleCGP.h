@@ -73,9 +73,16 @@ public:
         return child;
     }
 
-    bool isChildBetter(Circuit *oneChild){        //Primeiro, compara se têm a mesma tabela verdade, se não, é pior
-        for(size_t out = 0; out < oneChild->output_nodes.size(); ++out) {
-            for (size_t i = 0; i < oneChild->gates[oneChild->output_nodes[out]]->output_states.size(); ++i) {
+    bool isChildBetter(Circuit *oneChild){
+        //Primeiro, compara se têm a mesma tabela verdade, se não, é pior
+
+        for(size_t out = 0; out < best.output_nodes.size(); ++out) {
+            for (size_t i = 0; i < best.gates[best.output_nodes[out]]->output_states.size(); ++i) {
+
+                if(best.gates[best.output_nodes[out]]->output_states.size() != oneChild->gates[oneChild->output_nodes[out]]->output_states.size()){
+                    return false;
+                }
+
                 if (oneChild->gates[oneChild->output_nodes[out]]->output_states[i] != best.gates[best.output_nodes[out]]->output_states[i]) {
                     return false;
                 }
