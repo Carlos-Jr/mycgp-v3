@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     bench_name = bench_name.substr(0, bench_name.size() - 2); // Removing ".v"
 
     Circuit circuit;
-    circuit.loadFromVerilog(argv[1]);
+    circuit.loadFromVerilog(argv[1],2);
     circuit.update();
 
     int runGenerations = 70000;

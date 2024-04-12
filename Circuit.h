@@ -159,7 +159,7 @@ public:
         }
     }
 
-    void loadFromVerilog(const std::string& filepath) {
+    void loadFromVerilog(const std::string& filepath, int mult) {
         std::ifstream file(filepath);
         std::string line;
         std::vector<std::string> lines;
@@ -236,7 +236,7 @@ public:
         nodesList.insert(nodesList.end(), outputs.begin(), outputs.end());
         
         // gates.resize(nodesList.size(), nullptr);
-        generateGates(static_cast<int>(nodesList.size()*2));
+        generateGates(static_cast<int>(nodesList.size()*mult));
         
         for (size_t i = 0; i < inputs.size(); i++)
         {
@@ -294,7 +294,7 @@ public:
                     output_nodes[outputNodeNumber]= nodePosition;
                 }
 
-                nodePosition +=2;
+                nodePosition +=mult;
                 
             }
         }
